@@ -1,0 +1,6 @@
+HostName = "127.0.0.1"
+PortName = "27017"
+Username = "myUserAdmin"
+Password = "abc123"
+Database = "Mongo"
+Collection = "Hash"
