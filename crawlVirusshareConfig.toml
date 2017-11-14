@@ -1,6 +1,8 @@
 HostName = "127.0.0.1"
 PortName = "27017"
-Username = "myUserAdmin"
-Password = "abc123"
+Username = ""
+Password = ""
 Database = "Mongo"
 Collection = "Hash"
+Source = "admin"
+Worker = 20
