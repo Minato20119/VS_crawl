@@ -1,8 +1,8 @@
 package crawVirusshare
 
 import (
-	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"regexp"
 )
@@ -10,20 +10,19 @@ import (
 const URL = "https://virusshare.com/hashes.4n6"
 
 var RegexLinkMd5 = regexp.MustCompile("hashes/VirusShare_[0-9]{5}.md5")
-
 // Get Content File
 func getSourceUrl(url string) (string, error) {
 	resp, err := http.Get(url)
 
 	if err != nil {
-		fmt.Println("Error getSourceUrl: ")
+		log.Println(err)
 		return "", err
 	}
 	defer resp.Body.Close()
 
 	sourcePage, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error getSourceUrl: ")
+		log.Println(err)
 		return "", err
 	}
 	return string(sourcePage), err
@@ -32,7 +31,7 @@ func getSourceUrl(url string) (string, error) {
 func getLinkMd5() []string {
 	source, err := getSourceUrl(URL)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	linkMd5 := RegexLinkMd5.FindAllString(source, -1)
 
