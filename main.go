@@ -1,16 +1,18 @@
 package crawVirusshare
 
 import (
-	"fmt"
-	"time"
+	"log"
 	"runtime"
+	"time"
+	"gopkg.in/mgo.v2"
 )
 
-func main()  {
+func main() {
 	start := time.Now()
-	fmt.Println("Begin Program: ", time.Since(start))
+	log.Println(start)
+	var session *mgo.Session
+	data, session = connectMongoDB()
 
-	data, session := connectMongoDB()
 	defer session.Close()
 
 	linkMd5 := getLinkMd5()
@@ -18,35 +20,18 @@ func main()  {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	wg.Add(25)
+	wg.Add(config.Worker)
 
-	var linkMd5Second []string
-	var linkMd5First []string
+	temp := lenLinkMd5 / config.Worker
 
-	if lenLinkMd5 > 148 {
-		// Hash 65k line
-		linkMd5Second = linkMd5[149:]
-		// Hash 130k line
-		linkMd5First = linkMd5[0:149]
-
-		workers := 10
-		lenLinkMd5Second := len(linkMd5Second)
-		temp2 := lenLinkMd5Second / workers
-
-		for worker := 0; worker < workers - 1; worker++ {
-			go allLinkMd5(data, linkMd5Second, worker*temp2, (worker+1)*temp2)
-		}
-		go allLinkMd5(data, linkMd5Second, (workers - 1) *temp2, lenLinkMd5Second)
-
-		workers = 15
-		lenLinkMd5First := len(linkMd5First)
-		temp1 := lenLinkMd5First / workers
-
-		for worker := 0; worker < workers - 1; worker++ {
-			go allLinkMd5(data, linkMd5First, worker*temp1, (worker+1)*temp1)
-		}
-		allLinkMd5(data, linkMd5First, (workers - 1)*temp1, lenLinkMd5First)
+	// Vi link hash (_00000.md5 - temp) co 130k line, nen cho chay sau cung de no co the chay xong cac goroutine khac
+	// Tu link hash 149-300 co 65k line
+	for worker := 1; worker < config.Worker-1; worker++ {
+		go importDB(linkMd5, worker*temp, (worker+1)*temp)
 	}
+	go importDB(linkMd5, (config.Worker-1)*temp, lenLinkMd5)
+	// chay link 00000.md5 - temp
+	importDB(linkMd5, 0, temp)
 
-	fmt.Printf("Duration: %s\n", time.Since(start))
+	log.Printf("Duration: %s\n", time.Since(start))
 }
