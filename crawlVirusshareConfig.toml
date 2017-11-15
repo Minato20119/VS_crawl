@@ -5,4 +5,4 @@ Password = ""
 Database = "Mongo"
 Collection = "Hash"
 Source = "admin"
-Worker = 20
+Worker = 200
