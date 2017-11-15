@@ -1,18 +1,19 @@
 package crawVirusshare
 
 import (
+	"gopkg.in/mgo.v2"
 	"log"
 	"runtime"
 	"time"
-	"gopkg.in/mgo.v2"
+	"sync"
 )
+var wg sync.WaitGroup
 
 func main() {
 	start := time.Now()
-	log.Println(start)
-	var session *mgo.Session
-	data, session = connectMongoDB()
-
+	log.Println("Begin program: ", start)
+	session := connectMongoDB()
+	data = session.DB(config.Database).C(config.Collection)
 	defer session.Close()
 
 	linkMd5 := getLinkMd5()
@@ -20,18 +21,15 @@ func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	wg.Add(config.Worker)
-
 	temp := lenLinkMd5 / config.Worker
 
-	// Vi link hash (_00000.md5 - temp) co 130k line, nen cho chay sau cung de no co the chay xong cac goroutine khac
-	// Tu link hash 149-300 co 65k line
-	for worker := 1; worker < config.Worker-1; worker++ {
-		go importDB(linkMd5, worker*temp, (worker+1)*temp)
+	for worker := 0; worker < config.Worker-1; worker++ {
+		wg.Add(1)
+		go importLinkMd5(linkMd5, worker*temp, (worker+1)*temp)
 	}
-	go importDB(linkMd5, (config.Worker-1)*temp, lenLinkMd5)
-	// chay link 00000.md5 - temp
-	importDB(linkMd5, 0, temp)
+	wg.Add(1)
+	go importLinkMd5(linkMd5, (config.Worker-1)*temp, lenLinkMd5)
+	wg.Wait()
 
 	log.Printf("Duration: %s\n", time.Since(start))
 }
