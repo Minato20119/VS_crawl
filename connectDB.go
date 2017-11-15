@@ -2,7 +2,6 @@ package crawVirusshare
 
 import (
 	"gopkg.in/mgo.v2"
-	"io/ioutil"
 	"log"
 	"time"
 	"toml"
@@ -22,17 +21,15 @@ type Configuration struct {
 }
 
 func LoadFileConfig(path string) Configuration {
-	file, err := ioutil.ReadFile(path)
-	if err != nil {
-		log.Fatal("Config File Missing. ", err)
-	}
 	var config Configuration
-
-	toml.Decode(string(file), &config)
+	_, err := toml.DecodeFile(path, &config)
+	if err != nil {
+		log.Fatal("Config Parse Error: ", err)
+	}
 	return config
 }
 
-func connectMongoDB() (*mgo.Collection, *mgo.Session) {
+func connectMongoDB() *mgo.Session {
 	infoMongoDb := &mgo.DialInfo{
 		Addrs:    []string{config.HostName + ":" + config.PortName},
 		Timeout:  60 * time.Second,
@@ -49,6 +46,5 @@ func connectMongoDB() (*mgo.Collection, *mgo.Session) {
 	}
 
 	session.SetMode(mgo.Monotonic, true)
-	data := session.DB(config.Database).C(config.Collection)
-	return data, session
+	return session
 }
