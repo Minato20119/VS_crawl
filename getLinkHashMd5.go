@@ -37,8 +37,8 @@ func getLinkMd5() []string {
 	}
 	linkMd5 := RegexLinkMd5.FindAllString(source, -1)
 
-	for i := 0; i < len(linkMd5); i++ {
-		linkMd5[i] = "https://virusshare.com/" + linkMd5[i]
+	for lineLinkMd5 := range linkMd5  {
+		linkMd5[lineLinkMd5] = "https://virusshare.com/" + linkMd5[lineLinkMd5]
 	}
 	return linkMd5
 }

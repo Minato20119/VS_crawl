@@ -29,7 +29,7 @@ func LoadFileConfig(path string) Configuration {
 	return config
 }
 
-func connectMongoDB() *mgo.Session {
+func connectMongoDB() (*mgo.Session, error) {
 	infoMongoDb := &mgo.DialInfo{
 		Addrs:    []string{config.HostName + ":" + config.PortName},
 		Timeout:  60 * time.Second,
@@ -41,10 +41,9 @@ func connectMongoDB() *mgo.Session {
 
 	session, err := mgo.DialWithInfo(infoMongoDb)
 	if err != nil {
-		log.Println("Error connect database...")
-		panic(err)
+		log.Println("Error connect database...", err)
+		return session, err
 	}
-
 	session.SetMode(mgo.Monotonic, true)
-	return session
+	return session, err
 }
